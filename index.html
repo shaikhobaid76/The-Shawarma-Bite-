@@ -96,7 +96,7 @@ html.show-intro,html.show-intro body{overflow:hidden}
 </div>
 
 <main class="container">
-<div class="toolbar"><input id="search" class="search" placeholder="Search your favourite item..." oninput="renderMenu()"></div>
+<div class="toolbar"><input id="search" class="search" placeholder=" 🔍︎ Search your favourite item..." oninput="renderMenu()"></div>
 <section id="offerSection" class="offer-section">
   <span class="offer-badge">Special Festival Offer</span>
   <div class="offer-title">Flat 10% OFF on orders above ₹499 🎉</div>
@@ -113,8 +113,8 @@ html.show-intro,html.show-intro body{overflow:hidden}
 <h2>🛒 Your Order</h2><div id="orderSummary" class="summary"></div><div id="checkoutValidation" class="checkout-validation hidden">Please enter your name, phone number, and address.</div>
 <h3>Payment Method</h3><div class="pay-options"><div id="cashPay" class="pay active" onclick="choosePay('Cash on Delivery')">💵 Cash on Delivery</div><div id="onlinePay" class="pay" onclick="choosePay('Online Payment')">📲 Online Payment</div></div>
 <div id="qrBox" class="qr"><img id="qrImage" alt="Payment QR"><div style="color:#111;font-weight:900;margin-top:8px">Scan & Pay</div></div>
-<div id="paymentNote" class="payment-note cod-note">⚠️ <strong>Cash on Delivery:</strong> Order send karne ke 5 minutes ke baad order cancel nahi kiya ja sakta. Delivery par order receive karke payment karna hoga.</div>
-<p id="onlineNote" class="payment-note online-note hidden">📲 <strong>Online Payment:</strong> QR code se payment karein aur payment ka screenshot isi WhatsApp chat me attach karein.</p>
+<div id="paymentNote" class="payment-note cod-note">⚠️ <strong>Cash on Delivery:</strong> Once your order is placed, it cannot be cancelled after 5 minutes. Please ensure you receive the order and make the payment at the time of delivery.</div>
+<p id="onlineNote" class="payment-note online-note hidden">📲 <strong>Online Payment:</strong> Please pay using the QR code and send the payment screenshot here on WhatsApp.</p>
 <label>Your Name</label><input id="customerName" placeholder="Enter your name">
 <label>Phone / WhatsApp Number</label><input id="customerPhone" placeholder="Enter 10 digit phone number" inputmode="numeric" maxlength="10" pattern="[0-9]{10}">
 <label>Delivery Address</label><input id="customerAddress" placeholder="Enter complete address">
@@ -469,7 +469,7 @@ function sendWhatsApp(){
   msg+=`\n*TOTAL AMOUNT: ₹${money(t)}*\n*PAYMENT METHOD: ${payment}*\n\nCUSTOMER DETAILS\n\nName: ${n}\nPhone: ${p}\nAddress: ${a}\n\nPAYMENT NOTE\n\n`;
   if(payment==="Online Payment") msg+=`Please attach your payment screenshot in this WhatsApp chat.\n\n`;
   else msg+=`Please pay at the time of delivery.\n\n`;
-  msg+=`_*(${payment==="Online Payment"?"Order once placed cannot be cancelled after 5 minutes. You will have to accept the order and make the payment. Refund will not be issued.":"Cash on Delivery selected: order send karne ke 5 minutes ke baad order cancel nahi ho sakta. Delivery par order receive karke payment karna hoga."})*_\n\n_*Thank you for ordering from*_\n_*The Shawarma Bite!*_`;
+  msg+=`_*(${payment==="Online Payment"?"Order once placed cannot be cancelled after 5 minutes. You will have to accept the order and make the payment. Refund will not be issued.":"Cash on Delivery selected: Orders cannot be cancelled after 5 minutes. Please receive your order and pay at the time of delivery."})*_\n\n_*Thank you for ordering from*_\n_*The Shawarma Bite!*_`;
   if(payment==="Online Payment"){
     const ok=confirm("Payment ho gaya?\n\nPlease complete the online payment and attach the payment screenshot in this WhatsApp chat.\n\nPayment complete hone ke baad OK dabayein, phir WhatsApp open hoga.");
     if(!ok)return;
