@@ -464,7 +464,7 @@ function sendWhatsApp(){
   let n=customerName.value.trim(),p=customerPhone.value.trim(),a=customerAddress.value.trim();
   if(!n||!p||!a||!/^[0-9]{10}$/.test(p)){ const v=document.getElementById("checkoutValidation"); if(v) v.classList.remove("hidden"); return; }
    const v=document.getElementById("checkoutValidation"); if(v) v.classList.add("hidden");
-  let t=d.reduce((s,x)=>s+x.sub,0),msg=`*🌯 The Shawarma Bite*\n\nORDER DETAILS\n\n`;
+  let t=d.reduce((s,x)=>s+x.sub,0),msg=`*The Shawarma Bite 🌯*\n\nORDER DETAILS\n\n`;
   d.forEach((x,i)=>msg+=`${i+1}. ${x.name} × ${x.qty} — ₹${money(x.sub)}\n`);
   msg+=`\n*TOTAL AMOUNT: ₹${money(t)}*\n*PAYMENT METHOD: ${payment}*\n\nCUSTOMER DETAILS\n\nName: ${n}\nPhone: ${p}\nAddress: ${a}\n\nPAYMENT NOTE\n\n`;
   if(payment==="Online Payment") msg+=`Please attach your payment screenshot in this WhatsApp chat.\n\n`;
