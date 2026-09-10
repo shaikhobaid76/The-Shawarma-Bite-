@@ -8,7 +8,7 @@
 <script>
 (function(){
   const INTRO_KEY="tsb_intro_seen_at";
-  const INTRO_COOLDOWN=2*60*1000;
+  const INTRO_COOLDOWN=5*60*1000;
   try{
     const last=Number(localStorage.getItem(INTRO_KEY)||0);
     const show=!last || (Date.now()-last)>=INTRO_COOLDOWN;
@@ -181,14 +181,14 @@ const MENU_ITEMS = [
 
   // ==================== COLD DRINKS ====================
   {id:201,name:"Goti Soda",category:"Cold Drinks",price:30,image:"images/gotisoda.jpg"},
-  {id:201,name:"Big",category:"Cold Drinks",price:10,image:"images/big.jpg"},
-  {id:202,name:"Cloud9",category:"Cold Drinks",price:20,image:"images/cloud9.jpg"},
-  {id:203,name:"Campa",category:"Cold Drinks",price:20,image:"images/campa.jpg"},
-  {id:204,name:"Red Bull",category:"Cold Drinks",price:130,image:"images/red-bull.jpg"},
-  {id:205,name:"String",category:"Cold Drinks",price:20,image:"images/string.jpg"},
-  {id:206,name:"Lahori Zeera",category:"Cold Drinks",price:10,image:"images/lahorizeera.jpg"},
-  {id:207,name:"Fizz",category:"Cold Drinks",price:20,image:"images/fizz.jpg"},
-  {id:208,name:"Frooti",category:"Cold Drinks",price:20,image:"images/frooti.jpg"},
+  {id:202,name:"Big",category:"Cold Drinks",price:10,image:"images/big.jpg"},
+  {id:203,name:"Cloud9",category:"Cold Drinks",price:20,image:"images/cloud9.jpg"},
+  {id:204,name:"Campa",category:"Cold Drinks",price:20,image:"images/campa.jpg"},
+  {id:205,name:"Red Bull",category:"Cold Drinks",price:130,image:"images/red-bull.jpg"},
+  {id:206,name:"String",category:"Cold Drinks",price:20,image:"images/string.jpg"},
+  {id:207,name:"Lahori Zeera",category:"Cold Drinks",price:10,image:"images/lahorizeera.jpg"},
+  {id:208,name:"Fizz",category:"Cold Drinks",price:20,image:"images/fizz.jpg"},
+  {id:209,name:"Frooti",category:"Cold Drinks",price:20,image:"images/frooti.jpg"},
 
   // ==================== FRIES ====================
   {id:301,name:"Classic Salted Fries",category:"Fries",price:80,image:"images/classic-salted-fries.jpg"},
@@ -207,7 +207,7 @@ let currentCategory = "";
 
 const INTRO_KEY = "tsb_intro_seen_at";
 const VIEW_KEY = "tsb_last_view";
-const INTRO_COOLDOWN = 2 * 60 * 1000;
+const INTRO_COOLDOWN = 5 * 60 * 1000;
 const INTRO_MAX_MS = 10000;
 
 function saveView(){
@@ -467,17 +467,50 @@ function sendWhatsApp(){
   let n=customerName.value.trim(),p=customerPhone.value.trim(),a=customerAddress.value.trim();
   if(!n||!p||!a||!/^[0-9]{10}$/.test(p)){ const v=document.getElementById("checkoutValidation"); if(v) v.classList.remove("hidden"); return; }
    const v=document.getElementById("checkoutValidation"); if(v) v.classList.add("hidden");
-  let t=d.reduce((s,x)=>s+x.sub,0),msg=`*The Shawarma Bite 🌯*\n\nORDER DETAILS\n\n`;
-  d.forEach((x,i)=>msg+=`${i+1}. ${x.name} × ${x.qty} — ₹${money(x.sub)}\n`);
-  msg+=`\n*TOTAL AMOUNT: ₹${money(t)}*\n*PAYMENT METHOD: ${payment}*\n\nCUSTOMER DETAILS\n\nName: ${n}\nPhone: ${p}\nAddress: ${a}\n\nPAYMENT NOTE\n\n`;
+  // Build the message without putting raw emoji characters in the source.
+  // The placeholders are replaced with exact UTF-8 URL bytes at the very end.
+  const E={
+    wrap:"[[EMOJI_WRAP]]",
+    clipboard:"[[EMOJI_CLIPBOARD]]",
+    plate:"[[EMOJI_PLATE]]",
+    money:"[[EMOJI_MONEY]]",
+    card:"[[EMOJI_CARD]]",
+    person:"[[EMOJI_PERSON]]",
+    phone:"[[EMOJI_PHONE]]",
+    pin:"[[EMOJI_PIN]]",
+    memo:"[[EMOJI_MEMO]]"
+  };
+
+  let t=d.reduce((s,x)=>s+x.sub,0);
+  let msg=`${E.wrap} *The Shawarma Bite*\n\n${E.clipboard} *ORDER DETAILS*\n\n`;
+  d.forEach((x,i)=>msg+=`${E.plate} ${i+1}. ${x.name} x ${x.qty} - Rs.${money(x.sub)}\n`);
+  msg+=`\n${E.money} *TOTAL AMOUNT: Rs.${money(t)}*\n${E.card} *PAYMENT METHOD: ${payment}*\n\n${E.person} *CUSTOMER DETAILS*\n\n${E.person} Name: ${n}\n${E.phone} Phone: ${p}\n${E.pin} Address: ${a}\n\n${E.memo} *PAYMENT NOTE*\n\n`;
   if(payment==="Online Payment") msg+=`Please attach your payment screenshot in this WhatsApp chat.\n\n`;
   else msg+=`Please pay at the time of delivery.\n\n`;
   msg+=`_*(${payment==="Online Payment"?"Order once placed cannot be cancelled after 5 minutes. You will have to accept the order and make the payment. Refund will not be issued.":"Cash on Delivery selected: Orders cannot be cancelled after 5 minutes. Please receive your order and pay at the time of delivery."})*_\n\n_*Thank you for ordering from*_\n_*The Shawarma Bite!*_`;
+
   if(payment==="Online Payment"){
     const ok=confirm("Payment ho gaya?\n\nPlease complete the online payment and attach the payment screenshot in this WhatsApp chat.\n\nPayment complete hone ke baad OK dabayein, phir WhatsApp open hoga.");
     if(!ok)return;
   }
-  window.open("https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(msg),"_blank");
+
+  let encodedMsg=encodeURIComponent(msg);
+  const emojiBytes={
+    "[[EMOJI_WRAP]]":"%F0%9F%8C%AF",       // 🌯
+    "[[EMOJI_CLIPBOARD]]":"%F0%9F%93%8B",  // 📋
+    "[[EMOJI_PLATE]]":"%F0%9F%8D%BD%EF%B8%8F", // 🍽️
+    "[[EMOJI_MONEY]]":"%F0%9F%92%B0",      // 💰
+    "[[EMOJI_CARD]]":"%F0%9F%92%B3",       // 💳
+    "[[EMOJI_PERSON]]":"%F0%9F%91%A4",     // 👤
+    "[[EMOJI_PHONE]]":"%F0%9F%93%B1",      // 📱
+    "[[EMOJI_PIN]]":"%F0%9F%93%8D",        // 📍
+    "[[EMOJI_MEMO]]":"%F0%9F%93%9D"        // 📝
+  };
+  Object.keys(emojiBytes).forEach(k=>{
+    encodedMsg=encodedMsg.replaceAll(encodeURIComponent(k),emojiBytes[k]);
+  });
+
+  window.open("https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodedMsg,"_blank");
   // Clear selected items after sharing so the next order starts fresh.
   cart={};
   save();
