@@ -70,6 +70,82 @@ html.show-intro .intro-screen{display:flex}
 .intro-screen.to-black .intro-video{opacity:0}
 html.show-intro,html.show-intro body{overflow:hidden}
 .logo{cursor:pointer}
+
+/* Custom online-payment confirmation popup */
+.payment-confirm-overlay{
+  position:fixed;
+  inset:0;
+  z-index:10050;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.62);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+.payment-confirm-overlay.show{display:flex}
+.payment-confirm-box{
+  width:min(440px,100%);
+  background:#fff;
+  color:#171717;
+  border-radius:18px;
+  padding:26px 24px 22px;
+  box-shadow:0 24px 70px rgba(0,0,0,.35);
+  border:1px solid rgba(0,0,0,.08);
+  animation:paymentPopupIn .18s ease-out;
+}
+.payment-confirm-title{
+  margin:0 0 12px;
+  font-size:22px;
+  line-height:1.25;
+  font-weight:800;
+}
+.payment-confirm-text{
+  margin:0;
+  font-size:15px;
+  line-height:1.6;
+  color:#4a4a4a;
+}
+.payment-confirm-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:24px;
+}
+.payment-confirm-btn{
+  min-width:96px;
+  min-height:44px;
+  padding:10px 20px;
+  border:0;
+  border-radius:12px;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease;
+}
+.payment-confirm-btn:hover{transform:translateY(-1px)}
+.payment-confirm-btn:active{transform:translateY(0)}
+.payment-confirm-cancel{
+  background:#eef2f7;
+  color:#26313f;
+}
+.payment-confirm-ok{
+  background:#111;
+  color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+@keyframes paymentPopupIn{
+  from{opacity:0;transform:translateY(8px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:480px){
+  .payment-confirm-box{padding:22px 18px 18px;border-radius:16px}
+  .payment-confirm-title{font-size:20px}
+  .payment-confirm-actions{margin-top:20px}
+  .payment-confirm-btn{flex:1}
+}
+
 </style>
 </head>
 <body>
@@ -462,7 +538,33 @@ function choosePay(p){
   if(paymentNote) paymentNote.style.display=p==="Cash on Delivery"?"block":"none";
   if(p==="Online Payment") qrImage.src=QR_IMAGE;
 }
-function sendWhatsApp(){
+
+function showPaymentConfirm(){
+  return new Promise(resolve=>{
+    const overlay=document.getElementById("paymentConfirmOverlay");
+    const okBtn=document.getElementById("paymentConfirmOk");
+    const cancelBtn=document.getElementById("paymentConfirmCancel");
+    if(!overlay||!okBtn||!cancelBtn){resolve(false);return;}
+
+    const close=result=>{
+      overlay.classList.remove("show");
+      document.removeEventListener("keydown",onKey);
+      resolve(result);
+    };
+    const onKey=e=>{
+      if(e.key==="Escape") close(false);
+    };
+
+    okBtn.onclick=()=>close(true);
+    cancelBtn.onclick=()=>close(false);
+    overlay.onclick=e=>{if(e.target===overlay)close(false);};
+    document.addEventListener("keydown",onKey);
+    overlay.classList.add("show");
+    requestAnimationFrame(()=>okBtn.focus());
+  });
+}
+
+async function sendWhatsApp(){
   let d=data(); if(!d.length)return;
   let n=customerName.value.trim(),p=customerPhone.value.trim(),a=customerAddress.value.trim();
   if(!n||!p||!a||!/^[0-9]{10}$/.test(p)){ const v=document.getElementById("checkoutValidation"); if(v) v.classList.remove("hidden"); return; }
@@ -482,7 +584,7 @@ function sendWhatsApp(){
   };
 
   let t=d.reduce((s,x)=>s+x.sub,0);
-  let msg=`${E.wrap} *The Shawarma Bite*\n\n${E.clipboard} *ORDER DETAILS*\n\n`;
+  let msg=`*The Shawarma Bite* ${E.wrap}\n\n${E.clipboard} *ORDER DETAILS*\n\n`;
   d.forEach((x,i)=>msg+=`${E.plate} ${i+1}. ${x.name} x ${x.qty} - Rs.${money(x.sub)}\n`);
   msg+=`\n${E.money} *TOTAL AMOUNT: Rs.${money(t)}*\n${E.card} *PAYMENT METHOD: ${payment}*\n\n${E.person} *CUSTOMER DETAILS*\n\n${E.person} Name: ${n}\n${E.phone} Phone: ${p}\n${E.pin} Address: ${a}\n\n${E.memo} *PAYMENT NOTE*\n\n`;
   if(payment==="Online Payment") msg+=`Please attach your payment screenshot in this WhatsApp chat.\n\n`;
@@ -490,7 +592,7 @@ function sendWhatsApp(){
   msg+=`_*(${payment==="Online Payment"?"Order once placed cannot be cancelled after 5 minutes. You will have to accept the order and make the payment. Refund will not be issued.":"Cash on Delivery selected: Orders cannot be cancelled after 5 minutes. Please receive your order and pay at the time of delivery."})*_\n\n_*Thank you for ordering from*_\n_*The Shawarma Bite!*_`;
 
   if(payment==="Online Payment"){
-    const ok=confirm("Payment ho gaya?\n\nPlease complete the online payment and attach the payment screenshot in this WhatsApp chat.\n\nPayment complete hone ke baad OK dabayein, phir WhatsApp open hoga.");
+    const ok=await showPaymentConfirm();
     if(!ok)return;
   }
 
@@ -528,4 +630,16 @@ document.querySelector(".logo")?.addEventListener("keydown",e=>{
   if(e.key==="Enter" || e.key===" "){e.preventDefault();goHome();}
 });
 </script>
+
+<div id="paymentConfirmOverlay" class="payment-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="paymentConfirmTitle">
+  <div class="payment-confirm-box">
+    <h2 id="paymentConfirmTitle" class="payment-confirm-title">Payment completed?</h2>
+    <p class="payment-confirm-text">Please complete the online payment and attach the payment screenshot in this WhatsApp chat.</p>
+    <div class="payment-confirm-actions">
+      <button type="button" class="payment-confirm-btn payment-confirm-cancel" id="paymentConfirmCancel">Cancel</button>
+      <button type="button" class="payment-confirm-btn payment-confirm-ok" id="paymentConfirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
 </body></html>
